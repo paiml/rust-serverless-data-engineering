@@ -1,0 +1,71 @@
+variables:
+  - base_image_settings: &base_image
+      image: codeberg.org/crapstone/rust-woodpecker-ci:latest
+      pull: true
+  - nightly_image_settings: &nightly_image
+      image: codeberg.org/crapstone/rust-woodpecker-ci:nightly
+      pull: true
+      #  - env_settings: &ci_env_settings
+      #      environment:
+      #        DATABASE_URL: "postgres://pgdatabase:pgpasswd@postgres:5432/pgdatabase"
+      #        REDIS_URI: "redis://redict:6379"
+      #        APP_ENVIRONMENT: "ci"
+
+when:
+  - event: [push, pull_request]
+    branch: ${CI_REPO_DEFAULT_BRANCH} 
+
+steps:
+  #  - name: prepare
+  #    <<: [*base_image, *ci_env_settings]
+  #    commands:
+  #      - cargo install sqlx-cli --version=0.7.1 --features "rustls,postgres" --no-default-features --locked
+  #      - sqlx database create
+  #      - sqlx migrate run
+
+  - name: format
+    <<: *nightly_image
+    depends_on: []
+    commands:
+      - cargo fmt -- --check
+
+  - name: linting
+    <<: *base_image #, *ci_env_settings]
+    depends_on: [] #prepare]
+    commands:
+      - cargo clippy --workspace --all-features -- --deny clippy::all --deny warnings
+
+  - name: build
+    <<: *base_image #, *ci_env_settings]
+    depends_on: [] #prepare]
+    commands:
+      - cargo build --workspace --all-features
+
+  - name: test
+    <<: *base_image #, *ci_env_settings]
+    depends_on: [] #prepare]
+    #    failure: ignore
+    commands:
+      - cargo test --workspace --all-features
+      # - cargo tarpaulin --ignore-tests
+
+  - name: audit
+    <<: *base_image
+    depends_on: [] # enable parallel steps
+    failure: ignore
+    commands:
+      - cargo audit
+
+      #services:
+      #  - name: postgres
+      #    image: postgres:16-alpine
+      #    environment:
+      #      POSTGRES_USER: pgdatabase
+      #      POSTGRES_PASSWORD: pgpasswd
+      #      POSTGRES_DB: pgdatabase
+      #    ports:
+      #      - 5432
+      #  - name: redict
+      #    image: registry.redict.io/redict:7-alpine
+      #    ports:
+      #      - 6379
