@@ -1,0 +1,57 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_MIN_STACK: 16777216
+
+jobs:
+  ci:
+    name: build / test / 100% coverage
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: recho
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain (stable + components)
+        run: |
+          rustup toolchain install stable --profile minimal --component clippy --component rustfmt --component llvm-tools-preview
+          rustup default stable
+
+      - name: Cache cargo + target
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            recho/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('recho/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+
+      - name: Format check
+        run: cargo fmt --check
+
+      - name: Clippy (deny warnings)
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Build
+        run: cargo build --all-targets --all-features
+
+      - name: Test
+        run: cargo test --all-features
+
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-llvm-cov
+
+      - name: Coverage (100% gate, main.rs excluded — runtime entry only)
+        run: |
+          cargo llvm-cov --all-features --ignore-filename-regex 'main\.rs' --fail-under-lines 100 --fail-under-functions 100 --fail-under-regions 100 --summary-only

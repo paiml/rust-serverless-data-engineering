@@ -1,0 +1,22 @@
+# Cargo build output
+/target
+**/target/
+
+# Rustfmt backups
+**/*.rs.bk
+
+# Coverage profiling data
+*.profraw
+*.profdata
+
+# pmat caches (regenerated locally)
+.pmat/
+.pmat-metrics/
+.pmat-work/
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
