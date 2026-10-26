@@ -17,6 +17,8 @@ equations:
     formula: 'normalize(m) == "echo" => Ok(r) and r.message in {"dark ECHO", "light ECHO"}'
     domain: 'm in String'
     codomain: 'Result<Response, Error>'
+    preconditions:
+    - 'the handler receives a deserialized request payload'
     lean_theorem: Theorems.Recho.EchoKeyword
     postconditions:
     - 'response message is one of the two echo strings, chosen deterministically from the rng'
@@ -25,6 +27,8 @@ equations:
     formula: 'normalize(m) != "echo" => Ok(r) and r.message == "You said: " ++ normalize(m) ++ ". Say echo to play the tunnel game!"'
     domain: 'm in String'
     codomain: 'Result<Response, Error>'
+    preconditions:
+    - 'the handler receives a deserialized request payload'
     lean_theorem: Theorems.Recho.OtherMessageQuoted
     postconditions:
     - 'response quotes the trimmed, lower-cased message and prompts for echo'
@@ -33,6 +37,8 @@ equations:
     formula: 'message == None => Err(e) and display(e) contains "Missing message field"'
     domain: 'message in Option<String>'
     codomain: 'Result<Response, Error>'
+    preconditions:
+    - 'the handler receives a deserialized request payload'
     lean_theorem: Theorems.Recho.MissingMessageRejected
     postconditions:
     - 'the error text names the missing message field'
