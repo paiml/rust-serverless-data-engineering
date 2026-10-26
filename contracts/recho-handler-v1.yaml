@@ -1,0 +1,113 @@
+metadata:
+  version: 1.0.0
+  created: '2026-10-26'
+  author: 'PAIML Engineering'
+  description: |
+    Provable contract for recho::function_handler, the Lambda echo handler of
+    the Rust Serverless Data Engineering course companion. Three clauses
+    cover every accepted payload: the echo keyword, any other message, and a
+    missing message field. Each clause is exercised by the unit tests in
+    recho/src/lib.rs under the 100% coverage gate.
+  references:
+    - 'README §Provable contract'
+    - 'recho/src/lib.rs'
+
+equations:
+  echo_keyword:
+    formula: 'normalize(m) == "echo" => Ok(r) and r.message in {"dark ECHO", "light ECHO"}'
+    domain: 'm in String'
+    codomain: 'Result<Response, Error>'
+    lean_theorem: Theorems.Recho.EchoKeyword
+    postconditions:
+    - 'response message is one of the two echo strings, chosen deterministically from the rng'
+
+  other_message_quoted:
+    formula: 'normalize(m) != "echo" => Ok(r) and r.message == "You said: " ++ normalize(m) ++ ". Say echo to play the tunnel game!"'
+    domain: 'm in String'
+    codomain: 'Result<Response, Error>'
+    lean_theorem: Theorems.Recho.OtherMessageQuoted
+    postconditions:
+    - 'response quotes the trimmed, lower-cased message and prompts for echo'
+
+  missing_message_rejected:
+    formula: 'message == None => Err(e) and display(e) contains "Missing message field"'
+    domain: 'message in Option<String>'
+    codomain: 'Result<Response, Error>'
+    lean_theorem: Theorems.Recho.MissingMessageRejected
+    postconditions:
+    - 'the error text names the missing message field'
+
+proof_obligations:
+  - type: postcondition
+    property: 'Echo keyword yields one of the two echo strings'
+    formal: 'normalize(m) == "echo" => r.message in {"dark ECHO", "light ECHO"}'
+    applies_to: echo_keyword
+  - type: postcondition
+    property: 'Any other message is normalized and quoted back'
+    formal: 'normalize(m) != "echo" => r.message starts_with "You said: "'
+    applies_to: other_message_quoted
+  - type: postcondition
+    property: 'A missing message field is an error'
+    formal: 'message == None => is_err(result)'
+    applies_to: missing_message_rejected
+
+enforcement:
+  echo_keyword:
+    description: 'The echo keyword always yields a dark or light echo, never the prompt text.'
+    check: 'unit tests function_handler_echo_keyword_returns_dark_with_low_rng and function_handler_echo_keyword_returns_light_with_high_rng'
+    severity: 'ERROR'
+  other_message_quoted:
+    description: 'Non-echo input is normalized and quoted back with the game prompt.'
+    check: 'unit test function_handler_non_echo_message_is_normalized_and_quoted_back'
+    severity: 'ERROR'
+  missing_message_rejected:
+    description: 'A payload without a message field never produces a response.'
+    check: 'unit test function_handler_missing_message_field_is_an_error'
+    severity: 'ERROR'
+
+falsification_tests:
+  - id: FALSIFY-RECHO-001
+    rule: 'Echo keyword yields an echo string'
+    prediction: 'With a low rng the handler returns the dark echo; with a high rng the light echo.'
+    test: 'recho/src/lib.rs tests::function_handler_echo_keyword_returns_dark_with_low_rng and ..._light_with_high_rng'
+    if_fails: 'The echo branch was removed or the rng threshold changed.'
+  - id: FALSIFY-RECHO-002
+    rule: 'Other messages are quoted back'
+    prediction: 'A message such as "  Hello " returns "You said: hello. Say ..." with the trimmed lower-case text.'
+    test: 'recho/src/lib.rs tests::function_handler_non_echo_message_is_normalized_and_quoted_back'
+    if_fails: 'Normalization changed or the prompt text was edited.'
+  - id: FALSIFY-RECHO-003
+    rule: 'Missing message is rejected'
+    prediction: 'A payload with no message field returns Err whose text names the missing field.'
+    test: 'recho/src/lib.rs tests::function_handler_missing_message_field_is_an_error'
+    if_fails: 'The handler started defaulting a missing message instead of failing.'
+
+qa_gate:
+  id: F-RECHO-001
+  name: 'Recho Handler Contract'
+  description: 'Three clauses of recho::function_handler, exercised by the unit tests under the 100% coverage gate.'
+  checks:
+    - 'echo_keyword'
+    - 'other_message_quoted'
+    - 'missing_message_rejected'
+  pass_criteria: 'All three falsification tests pass and recho/src/lib.rs stays at 100% line, function and region coverage.'
+
+kani_harnesses:
+  - id: KANI-RECHO-001
+    obligation: 'Echo keyword yields an echo string'
+    property: 'normalize(m) == "echo" => r.message in {"dark ECHO", "light ECHO"}'
+    bound: 4
+    strategy: exhaustive
+    harness: verify_echo_keyword
+  - id: KANI-RECHO-002
+    obligation: 'Other messages are quoted back'
+    property: 'normalize(m) != "echo" => r.message starts_with "You said: "'
+    bound: 4
+    strategy: exhaustive
+    harness: verify_other_message_quoted
+  - id: KANI-RECHO-003
+    obligation: 'Missing message is rejected'
+    property: 'message == None => is_err(result)'
+    bound: 4
+    strategy: exhaustive
+    harness: verify_missing_message_rejected
