@@ -30,20 +30,29 @@ Every clause is exercised on every push by the CI coverage gate
 
 ## Install
 
-You need a recent stable Rust toolchain (MSRV 1.75) and `cargo-lambda` for deployment.
+The commands below are the same toolchain steps CI runs (stable Rust 1.95.0 with `clippy`, `rustfmt` and `llvm-tools-preview`; the workspace MSRV is 1.75). `cargo-lambda` is only needed to deploy.
+
+### Linux (Ubuntu 24.04)
 
 ```bash
-# Toolchain
-rustup toolchain install stable
-rustup component add rustfmt clippy llvm-tools-preview
+curl -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain 1.95.0
+rustup component add clippy rustfmt llvm-tools-preview
+cargo install cargo-llvm-cov --version 0.8.5 --locked
+cargo install cargo-lambda --version 1.9.2 --locked   # deployment only
+```
 
-# cargo-lambda for deploying to AWS Lambda
-cargo install cargo-lambda
+### macOS
 
-# Coverage tooling
-cargo install cargo-llvm-cov
+```bash
+curl -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain 1.95.0
+rustup component add clippy rustfmt llvm-tools-preview
+cargo install cargo-llvm-cov --version 0.8.5 --locked
+cargo install cargo-lambda --version 1.9.2 --locked   # deployment only
+```
 
-# Clone
+Then clone:
+
+```bash
 git clone https://github.com/paiml/rust-serverless-data-engineering
 cd rust-serverless-data-engineering
 ```
