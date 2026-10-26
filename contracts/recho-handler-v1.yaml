@@ -18,7 +18,7 @@ equations:
     domain: 'm in String'
     codomain: 'Result<Response, Error>'
     preconditions:
-    - 'the handler receives a deserialized request payload'
+    - 'the message field normalizes to the keyword echo, so the handler picks the dark or light echo from the rng'
     lean_theorem: Theorems.Recho.EchoKeyword
     postconditions:
     - 'response message is one of the two echo strings, chosen deterministically from the rng'
@@ -28,7 +28,7 @@ equations:
     domain: 'm in String'
     codomain: 'Result<Response, Error>'
     preconditions:
-    - 'the handler receives a deserialized request payload'
+    - 'the message field is any non-empty string that is not the keyword echo after trim and lower-casing'
     lean_theorem: Theorems.Recho.OtherMessageQuoted
     postconditions:
     - 'response quotes the trimmed, lower-cased message and prompts for echo'
@@ -38,7 +38,7 @@ equations:
     domain: 'message in Option<String>'
     codomain: 'Result<Response, Error>'
     preconditions:
-    - 'the handler receives a deserialized request payload'
+    - 'the request payload deserialized with no message field present'
     lean_theorem: Theorems.Recho.MissingMessageRejected
     postconditions:
     - 'the error text names the missing message field'

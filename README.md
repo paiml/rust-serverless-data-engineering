@@ -38,7 +38,7 @@ The commands below are the same toolchain steps CI runs (stable Rust 1.95.0 with
 curl -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain 1.95.0
 rustup component add clippy rustfmt llvm-tools-preview
 cargo install cargo-llvm-cov --version 0.8.5 --locked
-cargo install cargo-lambda   # deployment only
+cargo install cargo-lambda --version 1.9.2 --locked   # deployment only
 ```
 
 ### macOS
@@ -47,7 +47,7 @@ cargo install cargo-lambda   # deployment only
 curl -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain 1.95.0
 rustup component add clippy rustfmt llvm-tools-preview
 cargo install cargo-llvm-cov --version 0.8.5 --locked
-cargo install cargo-lambda   # deployment only
+cargo install cargo-lambda --version 1.9.2 --locked   # deployment only
 ```
 
 Then clone:
